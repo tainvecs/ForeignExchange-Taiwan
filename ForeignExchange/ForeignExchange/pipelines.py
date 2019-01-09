@@ -660,7 +660,7 @@ class ForeignexchangePipeline(object):
 
             # last updated
             fx_data_time = BeautifulSoup(etree.tostring(fx_item['last_updated']).strip(), features="lxml").get_text().strip()
-            year, month, day, hour, minute = re.search('.*: (\d*) 年 (\d*) 月 (\d*) 日 (\d*):(\d*):(\d*).*', fx_data_time).group(1,2,3,4,5)
+            year, month, day, hour, minute = re.search('.*:\ *(\d*)\ *年\ *(\d*)\ *月\ *(\d*)\ *日\ *(\d*)\ *:\ *(\d*)\ *:\ *(\d*).*', fx_data_time).group(1,2,3,4,5)
             fx_item['last_updated'] = "{}-{}-{} {}:{}".format(int(year)+1911, month, day, hour, minute)
 
             # currency table

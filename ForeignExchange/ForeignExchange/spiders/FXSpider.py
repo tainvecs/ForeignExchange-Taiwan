@@ -95,10 +95,10 @@ class FXSpider(scrapy.Spider):
             'CITITWTX-021',  # 花旗
         ]
 
-        return [ scrapy.Request(url=url, callback=self.parse_items, meta={'url':url, 'bank_id':bank_id})
-            for url,bank_id in zip(urls,banks_id) ]
+        #return [ scrapy.Request(url=url, callback=self.parse_items, meta={'url':url, 'bank_id':bank_id})
+        #    for url,bank_id in zip(urls,banks_id) ]
 
-        #return [ scrapy.Request(url=urls[2], callback=self.parse_items, meta={'url':urls[2], 'bank_id':banks_id[2]}) ]
+        return [ scrapy.Request(url=urls[-8], callback=self.parse_items, meta={'url':urls[-8], 'bank_id':banks_id[-8]}) ]
 
 
     def parse_items(self, response):
@@ -188,8 +188,8 @@ class FXSpider(scrapy.Spider):
             js_spider = True
         elif bank_id == 'HSBCTWTP-081':  # 匯豐
             click_xpaths = []
-            last_updated_xpath = '/html/body/div/div[4]/div[4]/div/div/div/form/table[2]/tbody/tr[1]/td[2]//text()'
-            table_xpath = '/html/body/div/div[4]/div[4]/div/div/div/form/table[2]/tbody'
+            last_updated_xpath = '/html/body/div/div[4]/div[3]/div/div/div/form/table[2]/tbody/tr[1]/td[2]//text()'
+            table_xpath = '/html/body/div/div[4]/div[3]/div/div/div/form/table[2]/tbody'
             js_spider = True
         elif bank_id == 'TCBBTWTH-053':  # 台中銀行
             click_xpaths = []
