@@ -6,6 +6,17 @@
 # https://doc.scrapy.org/en/latest/topics/spider-middleware.html
 
 from scrapy import signals
+from scrapy.http import HtmlResponse
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+import time
+
+
+CHROME_DRIVER_PATH = './bin/chromedriver'
 
 
 class ForeignexchangeSpiderMiddleware(object):
@@ -78,7 +89,29 @@ class ForeignexchangeDownloaderMiddleware(object):
         # - or return a Request object
         # - or raise IgnoreRequest: process_exception() methods of
         #   installed downloader middleware will be called
-        return None
+
+        start_link = request.meta.get('start_link')
+        click_xpaths = request.meta.get('click_xpaths')
+
+        options = webdriver.ChromeOptions()
+        options.add_argument('headless')
+        options.add_argument('window-size=1200,1100');
+        options.add_argument('user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"')
+
+        browser = webdriver.Chrome(CHROME_DRIVER_PATH, options=options)
+        browser.get(start_link)
+        time.sleep(1)
+
+        for click_xpath in click_xpaths:
+            WebDriverWait(browser, 10).until(
+                EC.presence_of_element_located((By.XPATH, click_xpath))
+                ).click()
+            time.sleep(1)
+
+        page_source = browser.page_source
+        browser.close()
+
+        return HtmlResponse(start_link, body=page_source, encoding='utf-8', request=request)
 
     def process_response(self, request, response, spider):
         # Called with the response returned from the downloader.
@@ -101,3 +134,4 @@ class ForeignexchangeDownloaderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
+        return None
