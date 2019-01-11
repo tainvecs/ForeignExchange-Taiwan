@@ -1,4 +1,5 @@
 
+import argparse
 
 from multiprocessing import Pool
 
@@ -19,10 +20,10 @@ from collections import defaultdict
 
 
 BANK_TABLE_PATH = './res/bank_table.json'
+BANK_CRAWLER_PROCESSES = None
 CHROME_DRIVER_PATH = './bin/chromedriver'
 
-
-currency2id = {
+CURRENCY2ID = {
     'US Dollar': 'USD', '美金': 'USD', '美元': 'USD',
     'Chinese Yuan': 'CNY', '人民幣': 'CNY',
     'Australian Dollar': 'AUD', '澳洲幣': 'AUD', '澳幣': 'AUD',
@@ -38,6 +39,89 @@ currency2id = {
     'Euro': 'EUR', '歐元': 'EUR',
     'New Zealand Dollar': 'NZD', '紐西蘭幣': 'NZD', '紐幣': 'NZD',
 }
+
+
+def ParseArgs():
+
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--bank_table')
+    parser.add_argument('--processes')
+    parser.add_argument('--chrome_driver')
+    parser.add_argument('--type')
+    parser.add_argument('--out_file')
+
+    args = parser.parse_args()
+
+
+    if args.processes:
+        args.processes = int(args.processes)
+    else:
+        args.processes = BANK_CRAWLER_PROCESSES
+
+    if not args.bank_table:
+         args.bank_table = BANK_TABLE_PATH
+
+    if not args.chrome_driver:
+        args.chrome_driver = CHROME_DRIVER_PATH
+
+    return args
+
+
+def StartBankCrawlersMultiprocessing(args, bank_table, processes):
+
+    result_list = []
+
+    pool = Pool(processes=processes)
+    for bank_id in bank_table:
+        result = pool.apply_async( func=CrawlBankFx, args=[args, bank_table[bank_id]] )
+        result_list.append(result)
+
+    pool.close()
+    pool.join()
+
+    return result_list
+
+
+def Output(args, result_list):
+
+    if args.out_file:
+
+        if args.type == 'json':
+
+            with open(args.out_file, 'a') as out_file:
+                result_js_list = [ result.get() for result in result_list ]
+                out_file.write(json.dumps(result_js_list, indent=4, sort_keys=False, ensure_ascii=False))
+
+        elif args.type == 'json_lines':
+
+            with open(args.out_file, 'a') as out_file:
+                for result in result_list:
+                    result_js = result.get()
+                    out_file.write( json.dumps(result_js, ensure_ascii=False) + '\n')
+
+    elif args.type == 'print':
+
+        for result in result_list:
+            print (result.get(), '\n')
+
+    elif args.type == 'print_pretty':
+
+        for result in result_list:
+            print (json.dumps(result.get(), indent=4, sort_keys=False, ensure_ascii=False))
+
+
+def CrawlBankFx(args, bank_table_dict):
+
+    print (bank_table_dict['bank_id'], 'start')
+
+    page_source = SeleniumOpenUrl(
+        url=bank_table_dict['start_link'], click_xpaths=bank_table_dict['click_xpaths'], driver_path=args.chrome_driver)
+    parsed_fx_dict = ParseBankFX(page_source, bank_table_dict)
+
+    print (bank_table_dict['bank_id'], 'fininsh')
+
+    return parsed_fx_dict
 
 
 def SeleniumOpenUrl(url, click_xpaths=[], driver_path=CHROME_DRIVER_PATH, options=None, given_browser=None, delay=2):
@@ -84,9 +168,7 @@ def ParseBankFX(page_source, bank_table_dict):
     if bank_table_dict['bank_id'] == 'APBKTWTH-806': # 元大
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_item = {}
@@ -103,16 +185,14 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'BBBKTWTP-118':  # 板信
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)年[^0-9]*(\d+)[^0-9]*(\d+)日[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911, re_pattern=r'[^0-9]*(\d+)年[^0-9]*(\d+)[^0-9]*(\d+)日[^0-9]*(\d+):(\d+).*')
 
         # fx table
         fx_item = {}
         for fx_tr in fx_table_soup.findAll('tr')[1:]:
 
             cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
-            cc = currency2id[cc_tmp]
+            cc = CURRENCY2ID[cc_tmp]
 
             fx_item[cc] = {
                 'bb_spot':__format_fx(bb_spot), 'bs_spot':__format_fx(bs_spot),
@@ -122,9 +202,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'BKAOTWTK-016':  # 高雄銀行
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+).*'
-        year, month, day = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3)
-        time_str = datetime.strptime("{}-{}-{}".format(year, month, day),"%Y-%m-%d").strftime("%Y-%m-%d")
+        time_str = __parse_datetime(time_soup_str, parse_time=False)
 
         # fx table
         fx_item = {}
@@ -141,9 +219,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'BKTWTWTP-004': # 台灣銀行
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -165,9 +241,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'CCBCTWTP-009':  # 彰銀
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)-(\d+)-(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
@@ -186,9 +260,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'CDIBTWTP-809':  # 凱基
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -204,9 +276,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'COBKTWTP-147':  # 三信
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_item = {}
@@ -223,9 +293,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'CTCBTWTP-822':  # 中國信託
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -258,9 +326,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'ENTITWTP-816':  # 安泰
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_item = {}
@@ -277,9 +343,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'ESUNTWTP-808': # 玉山
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)年(\d+)月(\d+)日[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -301,9 +365,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'FCBKTWTP-007':  # 第一銀
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
@@ -338,9 +400,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'HNBKTWTP-008':  # 華南
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
@@ -355,12 +415,10 @@ def ParseBankFX(page_source, bank_table_dict):
                 fx_item[cc]['bb_spot'], fx_item[cc]['bs_spot'] = __format_fx(bb), __format_fx(bs)
         fx_item = dict(fx_item)
 
-    elif bank_table_dict['bank_id'] == 'HSBCTWTP-081':  # 匯豐
+    elif bank_table_dict['bank_id'] == 'HSBCTWTP-081':  # 滙豐
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+).*'
-        year, month, day = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3)
-        time_str = datetime.strptime("{}-{}-{}".format(year, month, day),"%Y-%m-%d").strftime("%Y-%m-%d")
+        time_str = __parse_datetime(time_soup_str, parse_time=False)
 
         # fx table
         fx_item = {}
@@ -377,9 +435,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'IBOTTWTP-048': # 王道
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)年(\d+)月(\d+)日[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_tr_list_bs = fx_table_soup.find('div', {'id':'layout_0_main_default_0_lv_fxContent_tabContent_0'}).findAll('li', {'class':'n-table'})
@@ -401,9 +457,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'ICBCTWTP-017':  # 兆豐
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -420,17 +474,14 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'JSIBTWTP-815':  # 日盛
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        hour = int(hour)+12 if ('下午' in time_soup_str) else int(hour)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
         for fx_tr in fx_table_soup.findAll('tr')[1:]:
 
             cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
-            cc = currency2id[cc_tmp]
+            cc = CURRENCY2ID[cc_tmp]
 
             fx_item[cc] = {
                 'bb_spot':__format_fx(bb_spot), 'bs_spot':__format_fx(bs_spot),
@@ -440,9 +491,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'LBOTTWTP-005': # 土地
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -459,16 +508,14 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'MBBTTWTP-050':  # 台灣企銀
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
         for fx_tr in fx_table_soup.findAll('tr'):
 
             fx_type, bb, bs = [ td_bs.get_text().strip() for td_bs in fx_tr.findAll('td') ]
-            cc = currency2id[ fx_tr.find('th').get_text().strip() ]
+            cc = CURRENCY2ID[ fx_tr.find('th').get_text().strip() ]
 
             if 'CASH' == fx_type:
                 fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = __format_fx(bb), __format_fx(bs)
@@ -479,9 +526,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'MKTBTWTP-103':  # 新光
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)-(\d+)-(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -497,9 +542,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'SCBLTWTP-052':  # 渣打
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -516,9 +559,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'SCSBTWTP-011':  # 上海
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)[\ 年]*(\d+)[\ 月]*(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
@@ -536,9 +577,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'SINOTWTP-700': # 中郵
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+).*'
-        year, month, day = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3)
-        time_str = datetime.strptime("{}-{}-{}".format(int(year)+1911,month,day),"%Y-%m-%d").strftime("%Y-%m-%d")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911, parse_time=False)
 
         # fx table
         fx_item = {}
@@ -555,9 +594,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'SINOTWTP-807':  # 永豐
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)-(\d+)-(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -574,16 +611,14 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'SUNYTWTP-108':  # 陽信
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
         for fx_tr in fx_table_soup.findAll('tr'):
 
             bb_cash, bs_cash, bb_spot, bs_spot = [ fx_td.get_text() for fx_td in fx_tr.findAll('td')[1:] ]
-            cc = currency2id[ fx_tr.find('td').findAll('span')[-1].get_text().strip() ]
+            cc = CURRENCY2ID[ fx_tr.find('td').findAll('span')[-1].get_text().strip() ]
 
             fx_item[cc] = {
                 'bb_spot':__format_fx(bb_spot, extract=True), 'bs_spot':__format_fx(bs_spot, extract=True),
@@ -593,9 +628,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'TACBTWTP-006':  # 合庫
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_tr_list_bs = fx_table_soup.findAll('tr', {'class':'content-bk-line'})
@@ -615,9 +648,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'TCBBTWTH-053':  # 台中銀行
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -634,9 +665,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'TNBBTWTN-054':  # 京城
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+)：(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911)
 
         # fx table
         fx_item = {}
@@ -652,9 +681,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'TPBKTWTP-012': # 富邦
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -684,9 +711,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'TSIBTWTP-812':  # 台新
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = {}
@@ -703,9 +728,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'UBOTTWTP-803':  # 聯邦
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(int(year)+1911,month,day,hour,minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str, year_offset=1911, re_pattern=r'[^0-9]*(\d+)\/(\d+)\/(\d+)[^0-9]*(\d+):(\d+).*')
 
         # fx table
         fx_item = {}
@@ -722,9 +745,7 @@ def ParseBankFX(page_source, bank_table_dict):
     elif bank_table_dict['bank_id'] == 'UWCBTWTP-013': # 國泰
 
         # last updated
-        regex_pattern = r'[^0-9]*(\d+)年(\d+)月(\d+)[^0-9]*(\d+)時(\d+).*'
-        year, month, day, hour, minute = re.search(regex_pattern, time_soup_str, re.DOTALL).group(1, 2, 3, 4, 5)
-        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+        time_str = __parse_datetime(time_soup_str)
 
         # fx table
         fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':':'})
@@ -759,16 +780,6 @@ def ParseBankFX(page_source, bank_table_dict):
     return { 'bank_id':bank_table_dict['bank_id'], 'bank_name':bank_table_dict['cn_name'], 'last_updated':time_str, 'fx_table':fx_item }
 
 
-def CrawlBankFx(bank_table_dict):
-
-    print (bank_table_dict['bank_id'], 'start')
-    page_source = SeleniumOpenUrl(url=bank_table_dict['start_link'], click_xpaths=bank_table_dict['click_xpaths'])
-    parsed_fx_dict = ParseBankFX(page_source, bank_table_dict)
-    print (bank_table_dict['bank_id'], 'fininsh')
-
-    return parsed_fx_dict
-
-
 def __format_fx(num, extract=False):
 
     if num:
@@ -789,21 +800,41 @@ def __format_fx(num, extract=False):
     else: return '-'
 
 
+def __parse_datetime(target, re_pattern=None, parse_time=True, year_offset=0):
+
+    if parse_time:
+
+        if re_pattern:
+            regex_pattern = re_pattern
+        else:
+            regex_pattern = r'[^0-9]*(\d+)[-年\ \/]*(\d+)[-月\ \/]*(\d+)[^0-9]*(\d+)[:：時\ ]*(\d+).*'
+
+        year, month, day, hour, minute = re.search(regex_pattern, target, re.DOTALL).group(1, 2, 3, 4, 5)
+        year = int(year)+year_offset
+        hour = int(hour)+12 if (('下午' in target) or ('PM' in target)) else int(hour)
+        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
+
+    else:
+
+        if re_pattern:
+            regex_pattern = re_pattern
+        else:
+            regex_pattern = r'[^0-9]*(\d+)[-年\ \/]*(\d+)[-月\ \/]*(\d+).*'
+
+        year, month, day = re.search(regex_pattern, target, re.DOTALL).group(1, 2, 3)
+        year = int(year)+year_offset
+        time_str = datetime.strptime("{}-{}-{}".format(year, month, day),"%Y-%m-%d").strftime("%Y-%m-%d")
+
+    return time_str
+
+
 if __name__ == '__main__':
 
-    with open(BANK_TABLE_PATH, 'r') as in_file:
+    args = ParseArgs()
+
+    with open(args.bank_table, 'r') as in_file:
         bank_table = json.load(in_file)
 
-    pool = Pool(processes=8)
-    result_list = []
-    for bank_id in bank_table:
-        result = pool.apply_async( func=CrawlBankFx, args=[bank_table[bank_id]] )
-        result_list.append(result)
+    result_list = StartBankCrawlersMultiprocessing(args=args, bank_table=bank_table, processes=args.processes)
 
-    pool.close()
-    pool.join()
-
-    with open('bank-data.json', 'a') as out_file:
-        result_js_list = [ result.get() for result in result_list ]
-        parsed_json = json.dumps(result_js_list, sort_keys=False, ensure_ascii=False)
-        out_file.write(parsed_json)
+    Output(args, result_list)
