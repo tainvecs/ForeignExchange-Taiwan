@@ -1,0 +1,16 @@
+{
+    "US Dollar": "USD", "美金": "USD", "美元": "USD",
+    "Chinese Yuan": "CNY", "人民幣": "CNY",
+    "Australian Dollar": "AUD", "澳洲幣": "AUD", "澳幣": "AUD",
+    "Canadian Dollar": "CAD", "加拿大幣": "CAD", "加幣": "CAD",
+    "Hong Kong Dollar": "HKD", "港幣": "HKD",
+    "British Pound": "GBP", "英鎊": "GBP",
+    "Singapore Dollar": "SGD", "新加坡幣": "SGD",
+    "South African": "ZAR", "南非幣": "ZAR",
+    "Swedish Kroner": "SEK", "瑞典幣": "SEK",
+    "Swiss Franc": "CHF", "瑞士法郎": "CHF",
+    "Japanese Yen": "JPY", "日幣": "JPY", "日圓": "JPY", "日元": "JPY",
+    "Thai Baht": "THB", "泰銖": "THB",
+    "Euro": "EUR", "歐元": "EUR",
+    "New Zealand Dollar": "NZD", "紐西蘭幣": "NZD", "紐幣": "NZD"
+}
