@@ -21,20 +21,31 @@ class FX_Spider_TW():
         self.currency2id = currency2id
         self.chrome_browser = self.__new_chrome_browser(chrome_driver_path, chrome_options)
 
-    def __new_chrome_browser(self, chrome_driver_path, chrome_options=None):
+    def __new_chrome_browser(self, chrome_driver_path, chrome_options=None, os_name='linux'):
 
-        if not chrome_options:
+        if chrome_options is None:
+
             options = webdriver.ChromeOptions()
             options.add_argument('headless')
-            options.add_argument('window-size=1200,1100');
-            options.add_argument('user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"')
+            options.add_argument('window-size=1200,900');
+
+            if os_name == 'darwin':
+                options.add_argument('user-agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36"')
+
+            elif os_name == 'linux':
+                options.add_argument('user-agent="Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:15.0) Chrome/71.0.3578.98"')
+                options.add_argument('--no-sandbox')
+                options.add_argument('--disable-infobars')
+                options.add_argument('--disable-dev-shm-usage');
+                options.add_argument('--disable-extensions')
+
         else:
             options = chrome_options
 
-        return webdriver.Chrome(chrome_driver_path, options=options)
+        return webdriver.Chrome(executable_path=chrome_driver_path, options=options)
 
 
-    def SeleniumOpenUrl(self, url, click_xpaths=[], delay=2):
+    def SeleniumOpenUrl(self, url, click_xpaths=[], delay=1):
 
         self.chrome_browser.get(url)
         time.sleep(delay)
