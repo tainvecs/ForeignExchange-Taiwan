@@ -2,7 +2,7 @@
 # Ubuntu: 18.04, Python: 3.6
 # google-chrome-stable: 71.0.3578.98-1, ChromeDriver: 2.45
 
-# VERSION 1.3
+# VERSION 1.2
 
 FROM ubuntu:18.04
 
