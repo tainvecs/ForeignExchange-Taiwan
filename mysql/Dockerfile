@@ -1,12 +1,7 @@
 
 
 # Ubuntu:18.04, MariaDB:10.3
-# VERSION 0.0.1
-
-
-FROM ubuntu:18.04
-
-MAINTAINER Chin-Ho, Lin <tainvecs@gmail.com>
+# VERSION 0.0.2
 
 
 USER root
@@ -24,7 +19,11 @@ RUN sudo apt-get install -y software-properties-common \
         } | debconf-set-selections \
     && sudo apt install -y mariadb-server
 
-ADD res/my.cnf /etc/my.cnf
+
+VOLUME /mysql_code
+
+ADD res/my.cnf /mysql_code/
+ADD start_mysql.sh /mysql_code/
 EXPOSE 3306
 
-ENTRYPOINT ["/bin/bash"]
+CMD ["/bin/bash", "/mysql_code/start_mysql.sh"]
