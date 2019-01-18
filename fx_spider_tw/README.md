@@ -14,7 +14,7 @@
 ## Run Docker Container
 
 ```
-docker run -it --name "container_name" tainvecs/fx_tw-crawler
+docker run -it --name "container_name" -v spider_code:/spider_code tainvecs/fx_tw-crawler
 ```
 
 
