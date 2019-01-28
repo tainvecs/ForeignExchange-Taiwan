@@ -24,8 +24,11 @@ docker volume create "volume_name"
 
 ## Create and Run a MariaDB container
 
-* MYSQL_ROOT_PASSWORD: default password for root (set to "root" in the example command)
-* other parameters: MYSQL_USER, MYSQL_PASSWORD
+* **MYSQL_ROOT_PASSWORD**
+	- default password for root (set to "root" in the example command)
+* **Other Parameters**
+	- MYSQL_USER
+	- MYSQL_PASSWORD
 
 ```bash
 docker run -d --name "container_name" --network "network_name" \

@@ -125,8 +125,8 @@ docker run -d --name "container_name" --network "network_name" \
 ## Connect to MySQL
 
 * **host_name**
-	- The **container name** or the **ip address** of the postgresql container that connects to the spider with the docker network.
-* The **ip address** of the postgresql container can be look up by docker inspect.
+	- The **container name** or the **ip address** of the mariadb container that connects to the spider with the docker network.
+* The **ip address** of the mariadb container can be look up by docker inspect.
 * **user_name** and **user_password** are both be set to **"root"** in this example.
 
 ```Python
