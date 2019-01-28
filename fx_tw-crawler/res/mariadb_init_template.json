@@ -1,0 +1,24 @@
+{
+    "bank_info": [
+        "CREATE TABLE `bank_info` (",
+            "`bank_id` CHAR(12) PRIMARY KEY,",
+            "`cn_name` NVARCHAR(16) NOT NULL,",
+            "`en_name` VARCHAR(64) NOT NULL,",
+            "`start_link` VARCHAR(256) NOT NULL,",
+            "`js_spider` BOOLEAN DEFAULT False,",
+            "`fx_cycle` SMALLINT UNSIGNED NOT NULL,",
+            "`click_xpaths` TEXT NOT NULL,",
+            "`last_updated_xpath` VARCHAR(256) NOT NULL,",
+            "`fx_table_xpath` VARCHAR(256) NOT NULL,",
+            "`created` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,",
+            "`updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,",
+            "-- `FX` BOOLEAN DEFAULT False",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
+    ],
+    "bank": [
+        "-- CREATE TABLE `BANK_ID` (",
+            "`time` DATETIME PRIMARY KEY,",
+            "-- `FX` FLOAT(7, 5)",
+        ") ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;"
+    ]
+}

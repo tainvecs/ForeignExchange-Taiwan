@@ -1,0 +1,49 @@
+
+
+version: "3.7"
+
+
+services:
+
+    fx_tw-crawler:
+        build: ./fx_tw-crawler
+        image: tainvecs/fx_tw-crawler:2.0
+        networks:
+            - db-net
+        volumes:
+            - type: volume
+              source: spider_code
+              target: /spider_code
+        container_name: fx
+        stdin_open: true
+        tty: true
+        depends_on:
+            - fx_tw-mariadb
+
+    fx_tw-mariadb:
+        build: ./fx_tw-mariadb
+        image: tainvecs/fx_tw-mariadb:1.0
+        container_name: db-my
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+        networks:
+            - db-net
+        volumes:
+            - type: volume
+              source: mysql_data
+              target: /var/lib/mysql
+            - type: volume
+              source: mysql_code
+              target: /mysql_code
+        stdin_open: false
+        tty: false
+
+
+networks:
+    db-net:
+
+
+volumes:
+    spider_code:
+    mysql_code:
+    mysql_data:

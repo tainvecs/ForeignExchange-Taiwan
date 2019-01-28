@@ -8,18 +8,26 @@ from selenium.webdriver.support import expected_conditions as EC
 import re
 from lxml import etree
 from bs4 import BeautifulSoup
+import json
 
 import time
 from datetime import datetime
 
 from collections import defaultdict
 
+import pymysql
+
+
+DEBUG_MODE = True
+
 
 class FX_Spider_TW():
 
-    def __init__(self, currency2id, chrome_driver_path, chrome_options=None):
+    def __init__(self, currency2id, chrome_driver_path, chrome_options=None, debug=DEBUG_MODE):
         self.currency2id = currency2id
         self.chrome_browser = self.__new_chrome_browser(chrome_driver_path, chrome_options)
+        self.mariadb_connection = None
+        self.debug = debug
 
     def __new_chrome_browser(self, chrome_driver_path, chrome_options=None, os_name='linux'):
 
@@ -85,6 +93,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[:5] ]
                 cc = re.search(r'.*\((.+?)\).*', cc_tmp).group(1).strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -102,6 +113,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = self.currency2id[cc_tmp]
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -118,6 +132,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split()[0].strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -141,6 +158,9 @@ class FX_Spider_TW():
                 bb_cash = fx_tr.find('td', {'data-table':'本行現金買入'}).get_text()
                 bs_cash = fx_tr.find('td', {'data-table':'本行現金賣出'}).get_text()
 
+                if self.debug:
+                    print (bank_id, cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -157,6 +177,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb, bs = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = re.search(r'.*\((.+?)\).*', cc_tmp).group(1).strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb, bs)
 
                 if '-C' in cc_tmp:
                     cc = cc[:3]
@@ -176,6 +199,9 @@ class FX_Spider_TW():
 
                 cc, _, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[:6] ]
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -192,6 +218,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp[-3:]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -210,6 +239,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_cash, bs_cash, bb_spot, bs_spot = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split('/')[1].strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -225,6 +257,9 @@ class FX_Spider_TW():
             for fx_tr in fx_table_soup.find('tbody').findAll('tr'):
 
                 cc, bs_spot, bb_spot, bs_cash, bb_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[1:] ]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -242,6 +277,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split()[-1].strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -265,6 +303,9 @@ class FX_Spider_TW():
                 bb_cash = fx_tr.find('td', {'data-name':'現金買入匯率'}).get_text()
                 bs_cash = fx_tr.find('td', {'data-name':'現金賣出匯率'}).get_text()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -281,6 +322,9 @@ class FX_Spider_TW():
 
                 cc, fx_type, bb, bs = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[:4] ]
                 if r'(' in cc: cc = re.search(r'.*\((.+?)\).*', cc).group(1).strip()
+
+                if self.debug:
+                    print (bank_id, cc, fx_type, bb, bs)
 
                 if fx_type == 'Cash':
                     fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = self.__format_fx(bb), self.__format_fx(bs)
@@ -300,6 +344,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.find('span').find('span').get_text() for fx_td in fx_tr.findAll('div')[:-1] ]
                 cc = cc_tmp.split()[1].strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -316,6 +363,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb, bs = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split()[0].strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb, bs)
 
                 if 'CASH' in cc_tmp:
                     fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = self.__format_fx(bb), self.__format_fx(bs)
@@ -335,6 +385,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = re.search(r'.*\((.+?)\).*', cc_tmp).group(1)
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -346,21 +399,41 @@ class FX_Spider_TW():
             time_str = self.__parse_datetime(time_soup_str)
 
             # fx table
-            fx_tr_list_bs = fx_table_soup.find('div', {'id':'layout_0_main_default_0_lv_fxContent_tabContent_0'}).findAll('li', {'class':'n-table'})
-            fx_tr_list_bb = fx_table_soup.find('div', {'id':'layout_0_main_default_0_lv_fxContent_tabContent_1'}).findAll('li', {'class':'n-table'})
+            fx_tr_list_bs_spot = fx_table_soup.find('div', {'id':'layout_0_main_default_0_lv_fxContent_tabContent_0'}).findAll('li', {'class':'n-table'})
+            fx_tr_list_bb_spot = fx_table_soup.find('div', {'id':'layout_0_main_default_0_lv_fxContent_tabContent_1'}).findAll('li', {'class':'n-table'})
+            fx_tr_list_bs_cash = fx_table_soup.find('div', {'id':'layout_0_main_default_2_lv_fxContent_tabContent_0'}).findAll('li', {'class':'n-table'})
+            fx_tr_list_bb_cash = fx_table_soup.find('div', {'id':'layout_0_main_default_2_lv_fxContent_tabContent_1'}).findAll('li', {'class':'n-table'})
 
-            fx_item = {}
-            for fx_tr_bs, fx_tr_bb in zip(fx_tr_list_bs, fx_tr_list_bb):
+            fx_item = defaultdict(lambda:{'bb_cash':'-', 'bs_cash':'-', 'bb_spot':'-', 'bs_spot':'-'})
 
-                fx_tr_bs_list = fx_tr_bs.findAll('span', {'class':'w3-col'})
-                fx_tr_bb_list = fx_tr_bb.findAll('span', {'class':'w3-col'})
+            for fx_tr_bs, fx_tr_bb in zip(fx_tr_list_bs_spot, fx_tr_list_bb_spot):
+
+                fx_tr_bs_list = fx_tr_bs.find_all(class_='w3-col')
+                fx_tr_bb_list = fx_tr_bb.find_all(class_='w3-col')
+
+                cc = fx_tr_bs_list[0].findAll('div')[2].get_text().strip()
+                bs_spot = fx_tr_bs_list[2].find('span').get_text().strip()
+                bb_spot = fx_tr_bb_list[2].find('span').get_text().strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot)
+
+                fx_item[cc]['bb_spot'], fx_item[cc]['bs_spot'] = self.__format_fx(bb_spot), self.__format_fx(bs_spot)
+
+            for fx_tr_bs, fx_tr_bb in zip(fx_tr_list_bs_cash, fx_tr_list_bb_cash):
+
+                fx_tr_bs_list = fx_tr_bs.find('div', {'class':'table-row'}).findAll('span', {'class':'w3-col'})
+                fx_tr_bb_list = fx_tr_bb.find('div', {'class':'table-row'}).findAll('span', {'class':'w3-col'})
 
                 cc = fx_tr_bs_list[0].findAll('span')[2].get_text().strip()
+                bs_cash = fx_tr_bs_list[1].get_text().strip()
+                bb_cash = fx_tr_bb_list[1].get_text().strip()
 
-                fx_item[cc] = {
-                    'bb_spot':self.__format_fx(fx_tr_bb_list[1].get_text()), 'bs_spot':self.__format_fx(fx_tr_bs_list[1].get_text()),
-                    'bb_cash':self.__format_fx(fx_tr_bb_list[2].get_text()), 'bs_cash':self.__format_fx(fx_tr_bs_list[2].get_text())
-                }
+                if self.debug:
+                    print (bank_id, cc, bb_cash, bs_cash)
+
+                fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = self.__format_fx(bb_cash), self.__format_fx(bs_cash)
+            fx_item = dict(fx_item)
 
         elif bank_id == 'ICBCTWTP-017':  # 兆豐
 
@@ -373,6 +446,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bb_cash, bs_spot, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[:-1] ]
                 cc = re.search(r'.*\[(.+?)\].*', cc_tmp).group(1)
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -391,6 +467,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = self.currency2id[cc_tmp]
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -407,6 +486,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = fx_tr.findAll('td')[:5]
                 cc = re.search(r'.*\((.+?)\).*', cc_tmp.find('label').get_text()).group(1).strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot.find('div').get_text(), bs_spot.find('div').get_text(), bb_cash.find('div').get_text(), bs_cash.find('div').get_text())
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot.find('div').get_text()), 'bs_spot':self.__format_fx(bs_spot.find('div').get_text()),
@@ -425,6 +507,9 @@ class FX_Spider_TW():
                 fx_type, bb, bs = [ td_bs.get_text().strip() for td_bs in fx_tr.findAll('td') ]
                 cc = self.currency2id[ fx_tr.find('th').get_text().strip() ]
 
+                if self.debug:
+                    print (bank_id, cc, fx_type, bb, bs)
+
                 if 'CASH' == fx_type:
                     fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = self.__format_fx(bb), self.__format_fx(bs)
                 elif 'SPOT' == fx_type:
@@ -441,6 +526,9 @@ class FX_Spider_TW():
             for fx_tr in fx_table_soup.findAll('ul')[1:]:
 
                 cc, _, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.find('p').get_text().strip() for fx_td in fx_tr.findAll('li')[:-1] ]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -459,6 +547,9 @@ class FX_Spider_TW():
                 bb_cash, bs_cash, bb_spot, bs_spot = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = fx_tr.find('th').get_text().strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -474,6 +565,9 @@ class FX_Spider_TW():
             for fx_tr in fx_table_soup.findAll('tr')[3:]:
 
                 cc, bb, bs = [ fx_td.find('span').get_text().strip() for fx_td in fx_tr.findAll('td')[1:] ]
+
+                if self.debug:
+                    print (bank_id, cc, bb, bs)
 
                 if 'CASH' in cc:
                     cc = cc.split()[0]
@@ -494,6 +588,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bb_cash, bs_spot, bs_cash = [ fx_td.get_text() for fx_td in fx_tr.findAll('div') ]
                 cc = re.search(r'.*\((.+?)\).*', cc_tmp).group(1).strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -511,6 +608,9 @@ class FX_Spider_TW():
                 bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[1:] ]
                 cc = re.search(r'.*\((.+?)\).*', fx_tr.find('td').find('div').get_text().strip()).group(1).strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -527,6 +627,9 @@ class FX_Spider_TW():
 
                 bb_cash, bs_cash, bb_spot, bs_spot = [ fx_td.get_text() for fx_td in fx_tr.findAll('td')[1:] ]
                 cc = self.currency2id[ fx_tr.find('td').findAll('span')[-1].get_text().strip() ]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot, extract=True), 'bs_spot':self.__format_fx(bs_spot, extract=True),
@@ -548,6 +651,9 @@ class FX_Spider_TW():
                 cc, _, bs_spot, bs_cash = [ td_bs.find('span').get_text().strip() for td_bs in fx_tr_bs.findAll('td')[:4] ]
                 bb_spot, bb_cash = [ td_bb.find('span').get_text().strip() for td_bb in fx_tr_bb.findAll('td')[2:4] ]
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -565,6 +671,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_cash, bs_cash, bb_spot, bs_spot = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split()[1].strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -580,6 +689,9 @@ class FX_Spider_TW():
             for fx_tr in fx_table_soup.findAll('tr')[2:-2]:
 
                 cc, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[1:] ]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -611,6 +723,9 @@ class FX_Spider_TW():
                 else:
                     bb_cash, bs_cash = '-', '-'
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -628,6 +743,9 @@ class FX_Spider_TW():
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.strip()[-3:].strip()
 
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
+
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
                     'bb_cash':self.__format_fx(bb_cash), 'bs_cash':self.__format_fx(bs_cash)
@@ -644,6 +762,9 @@ class FX_Spider_TW():
 
                 cc_tmp, bb_spot, bs_spot, bb_cash, bs_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = cc_tmp.split('/')[1].strip()
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -663,6 +784,9 @@ class FX_Spider_TW():
                 cc_tmp, bb, bs = [ fx_td.find('font').get_text().strip() for fx_td in fx_tr.findAll('td') ]
                 cc = re.search('.*\((.+?)\).*', cc_tmp).group(1)
 
+                if self.debug:
+                    print (bank_id, cc, bb, bs)
+
                 if 'Cash' in cc_tmp:
                     fx_item[cc]['bb_cash'], fx_item[cc]['bs_cash'] = self.__format_fx(bb), self.__format_fx(bs)
                 else:
@@ -672,13 +796,16 @@ class FX_Spider_TW():
         elif bank_id == 'CITITWTX-021':  # 花旗
 
             # last updated
-            time_str = datetime.today().strftime("%Y-%m-%d")
+            time_str = datetime.today().strftime("%Y-%m-%d %H:%M")
 
             # fx table
             fx_item = {}
             for fx_tr in fx_table_soup.findAll('tr')[2:]:
 
                 cc, bs_spot, bb_spot, bs_cash, bb_cash = [ fx_td.get_text().strip() for fx_td in fx_tr.findAll('td')[1:] ]
+
+                if self.debug:
+                    print (bank_id, cc, bb_spot, bs_spot, bb_cash, bs_cash)
 
                 fx_item[cc] = {
                     'bb_spot':self.__format_fx(bb_spot), 'bs_spot':self.__format_fx(bs_spot),
@@ -694,11 +821,11 @@ class FX_Spider_TW():
             num = num.strip()
 
         if extract:
-            match = re.search(r'[^0-9]*(\d+\.\d+)[^0-9]*', num)
+            match = re.search(r'[^0-9]*([0-9\.]+)[^0-9]*', num)
             if not (match is None):
                 num = match.group(1).strip()
 
-        if re.match("^\d+\.\d+$", num):
+        if re.match("^[0-9\.]+$", num):
 
             num = "%.5f" % float(num)
 
@@ -719,9 +846,7 @@ class FX_Spider_TW():
 
             year, month, day, hour, minute = re.search(regex_pattern, target, re.DOTALL).group(1, 2, 3, 4, 5)
             year = int(year)+year_offset
-            hour = int(hour)+12 if (('下午' in target) or ('PM' in target)) else int(hour)
-            time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute),"%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
-
+            hour = int(hour)+12 if ((('下午' in target) or ('PM' in target)) and (int(hour) < 12)) else int(hour)
         else:
 
             if re_pattern:
@@ -731,11 +856,71 @@ class FX_Spider_TW():
 
             year, month, day = re.search(regex_pattern, target, re.DOTALL).group(1, 2, 3)
             year = int(year)+year_offset
-            time_str = datetime.strptime("{}-{}-{}".format(year, month, day),"%Y-%m-%d").strftime("%Y-%m-%d")
+            hour, minute = datetime.today().hour, datetime.today().minute
 
+        time_str = datetime.strptime("{}-{}-{} {}:{}".format(year, month, day, hour, minute), "%Y-%m-%d %H:%M").strftime("%Y-%m-%d %H:%M")
         return time_str
 
 
+    def __connect_mariadb(self, mariadb_config):
+
+        if not mariadb_config: raise
+
+        self.mariadb_connection = (pymysql.connect(
+            host=mariadb_config["mariadb_host"],
+            port=mariadb_config["mariadb_port"],
+            user=mariadb_config["mariadb_user"],
+            password=mariadb_config["mariadb_password"],
+            database=mariadb_config["mariadb_database"],
+            charset=mariadb_config["mariadb_charset"]
+        ))
+
+        if not self.mariadb_connection: raise
+
+
+    def MariaDBSave(self, mariadb_config_path, parsed_fx_dict):
+
+        if (not mariadb_config_path) or (not parsed_fx_dict):
+            return None
+        else:
+            with open(mariadb_config_path, 'r') as in_json:
+                mariadb_config = json.load(in_json)
+            self.__connect_mariadb(mariadb_config)
+
+        # parsed_fx_dict
+        bank_id = parsed_fx_dict['bank_id']
+        last_updated = parsed_fx_dict['last_updated']
+        fx_item_dict = parsed_fx_dict['fx_table']
+
+        # generate mysql code
+        mysql_prefix = "INSERT IGNORE INTO `{}` SET {} = '{}', ".format(bank_id, 'time', last_updated)
+        mysql_postfix = ";"
+
+        mysql_list = []
+        for fx in fx_item_dict:
+            if fx_item_dict[fx]['bb_spot'] != '-':
+                mysql_list.append("{}_SPOT_BB = {}".format(fx, fx_item_dict[fx]['bb_spot']))
+            if fx_item_dict[fx]['bs_spot'] != '-':
+                mysql_list.append("{}_SPOT_BS = {}".format(fx, fx_item_dict[fx]['bs_spot']))
+            if fx_item_dict[fx]['bb_cash'] != '-':
+                mysql_list.append("{}_CASH_BB = {}".format(fx, fx_item_dict[fx]['bb_cash']))
+            if fx_item_dict[fx]['bs_cash'] != '-':
+                mysql_list.append("{}_CASH_BS = {}".format(fx, fx_item_dict[fx]['bs_cash']))
+        mysql_code = mysql_prefix + ', '.join(mysql_list) + mysql_postfix
+
+        if self.debug:
+            print (mysql_code)
+
+        # execute mysql code
+        cursor = self.mariadb_connection.cursor()
+        cursor.execute(mysql_code)
+        self.mariadb_connection.commit()
+        cursor.close()
+
+
     def Close(self):
+
         if self.chrome_browser:
             self.chrome_browser.quit()
+        if self.mariadb_connection:
+            self.mariadb_connection.close()

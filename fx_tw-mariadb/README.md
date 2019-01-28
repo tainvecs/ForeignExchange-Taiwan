@@ -7,10 +7,18 @@
 * <tainvecs@gmail.com>
 
 
-## Create a Docker Network for MariaDB Containers
+## Create a Docker Network and a Shared Volume
+
+* the Docker Network for FX Spiders and MariaDB Containers
 
 ```bash
 docker network create "network_name"
+```
+
+* the Shared Volume for MariaDB Containers
+
+```bash
+docker volume create "volume_name"
 ```
 
 
@@ -21,7 +29,7 @@ docker network create "network_name"
 
 ```bash
 docker run -d --name "container_name" --network "network_name" \
-    -v mariadb_code:/mariadb_code -e MYSQL_ROOT_PASSWORD=root tainvecs/fx_tw-mariadb:0.0.3
+    -v "volume_name":/mariadb_code -e MYSQL_ROOT_PASSWORD=root tainvecs/fx_tw-mariadb:1.0
 ```
 
 
