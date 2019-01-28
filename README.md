@@ -67,7 +67,7 @@ docker-compose up -d
 docker exec -it fx /bin/bash
 ```
 
-* Run **init-mariadb.py** to initialize the database ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/blob/master/fx_spider_tw/README.md))
+* Run **init-mariadb.py** to initialize the database ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/README.md))
     - **--mariadb_config**
     - **--mariadb_init_template**
     - **--bank_table**
@@ -83,7 +83,7 @@ python init-mariadb.py \
 
 ## Run a FX Crawler or Set up Schedule for it
 
-* Run a FX Crawler ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/blob/master/fx_spider_tw/README.md))
+* Run a FX Crawler ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/README.md))
     - **--bank_table**
     - **--processes**
     - **--chrome_driver**
@@ -124,7 +124,7 @@ python update-bank_table_fx_trade.py \
     --out_file /spider_code/res/bank_table_new.json
 ```
 
-* Set up Schedule for a FX Crawler ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/blob/master/fx_spider_tw/README.md))
+* Set up Schedule for a FX Crawler ([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/README.md))
     - **schedule_start.sh**
     - **schedule.crontab**
     - **schedule.sh**
