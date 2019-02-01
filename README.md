@@ -58,6 +58,8 @@ docker-compose up -d
     - email config file for sending error report of a fx crawler
     - default config file is at "/spider_code/res/email.config"
 
+* **.gitignore** and **.dockerignore** will ignore files with '.private' at the end of filename. You may add '.private' to the end of the filename of your private key or config files to avoid git keeping track of them. Also, remember to edit filenames in the commands and **schedule.sh**. 
+
 
 ## Initialize the Database for Saving Crawled Data
 
