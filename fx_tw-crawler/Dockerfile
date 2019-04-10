@@ -40,7 +40,7 @@ ADD ["*.py", "/spider_code/"]
 ADD ["README.md", "/spider_code/README.md"]
 
 # temporary packages
-RUN sudo apt-get install -y unzip gdebi
+RUN sudo apt-get install -y unzip
 
 # install crontab
 RUN sudo apt-get install -y cron \
@@ -52,18 +52,16 @@ RUN sudo apt-get -y install python3.6 python3.6-dev python3-pip build-essential 
     && sudo pip3 install -r /spider_code/res/requirements.txt \
     && echo "alias python='python3'" >> ~/.bashrc
 
-# install chromium-browser 71.0.3578.98-0
-RUN sudo apt-get -y install wget \
-    && wget http://security.ubuntu.com/ubuntu/pool/universe/c/chromium-browser/chromium-browser_71.0.3578.98-0ubuntu0.18.04.1_amd64.deb \
-        -O /tmp/chromium-browser.deb \
-    && sudo gdebi --non-interactive /tmp/chromium-browser.deb
+# install chromium-browser
+RUN sudo apt-get install -y chromium-browser
 
 # download chromedriver 2.45 linux 64 bit
-RUN wget http://chromedriver.storage.googleapis.com/2.45/chromedriver_linux64.zip -O /tmp/chromedriver.zip \
+RUN sudo apt-get -y install wget \
+    && wget http://chromedriver.storage.googleapis.com/2.45/chromedriver_linux64.zip -O /tmp/chromedriver.zip \
     && unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/
 
 # uninstall and remove temporary packages
-RUN sudo apt-get remove -y unzip gdebi \
-    && rm /tmp/chromium-browser.deb /tmp/chromedriver.zip
+RUN sudo apt-get remove -y unzip \
+    && rm /tmp/chromedriver.zip
 
 ENTRYPOINT ["/bin/bash"]
