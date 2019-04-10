@@ -1481,6 +1481,7 @@
         "js_spider": true,
         "fx_cycle": 1440,
         "click_xpaths": [
+            "//*[@id=\"ngdialog6\"]/div[2]/div/div[2]/button[1]",
             "//*[@id=\"noticeall\"]/div[5]/div/div[1]/div[2]/ul/li[3]/a"
         ],
         "last_updated_xpath": "//*[@id=\"css_table\"]/div/div",

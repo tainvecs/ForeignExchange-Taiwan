@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 import re
 from lxml import etree
@@ -58,11 +59,21 @@ class FX_Spider_TW():
         self.chrome_browser.get(url)
         time.sleep(delay)
 
+        try:
+            WebDriverWait(self.chrome_browser, 2).until(EC.alert_is_present())
+            self.chrome_browser.switch_to.alert.accept()
+        except TimeoutException:
+            pass
+
         for click_xpath in click_xpaths:
-            WebDriverWait(self.chrome_browser, 10).until(
-                EC.presence_of_element_located((By.XPATH, click_xpath))
-                ).click()
-            time.sleep(delay)
+
+            xml_tree = etree.HTML(self.chrome_browser.page_source)
+            
+            if xml_tree.xpath(click_xpath) != []: 
+                WebDriverWait(self.chrome_browser, 10).until(
+                    EC.presence_of_element_located((By.XPATH, click_xpath))
+                    ).click()
+                time.sleep(delay)
 
         page_source = self.chrome_browser.page_source
         self.chrome_browser.close()
