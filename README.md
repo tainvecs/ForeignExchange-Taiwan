@@ -14,7 +14,7 @@
 
 
 ## Outline
-* [Structure](https://gitlab.com/tainvecs/MachineLearning-2017/blob/master/hw4/README.md#structure)
+* [Structure](https://gitlab.com/tainvecs/foreignexchange-taiwan/#structure)
     + **Docker Image**
         + fx_tw-crawler
         + fx_tw-mariadb
@@ -27,7 +27,7 @@
         + mysql_code
     + **Network**
         + db-net
-* [Get Started with Docker Compose](https://gitlab.com/tainvecs/MachineLearning-2017/blob/master/hw4/README.md#get-started-with-docker-compose)
+* [Get Started with Docker Compose](https://gitlab.com/tainvecs/foreignexchange-taiwan/#get-started-with-docker-compose)
     + **Build**
         + Build Docker Images and Set Up Network and Shared Volumes
     + **Set Up**
