@@ -198,9 +198,9 @@
             + Default scheduled crawler also use the email_config **\"/spider_code/res/email.config\"** to send error report.
         + Edit the Schedule Task
             + **\"/spider_code/schedule/schedule_start.sh\"**
-            + Default schedule task run the crawler every ten minute from 09:00 to 18:00 everyday.
-            + Default schedule task also redirect stdin and stderr to log file **\"/spider_code/log/crontag.log\"**.
-        + Start a Schedule Task for an Foreign Exchange Crawler
+            + Default schedule task run the crawler every ten minutes from 09:00 to 18:00 everyday.
+            + Default schedule task also redirects stdin and stderr to a log file **\"/spider_code/log/crontag.log\"**.
+        + Start a Schedule Task for a foreign exchange Crawler
             + ```bash
                 bash /spider_code/schedule/schedule_start.sh
               ```
