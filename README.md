@@ -16,11 +16,11 @@
 
 
 ## Overview
-This project provides a foreign exchange spider of [34](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/res/banks.md) banks in Taiwan. The spider crawls latest foreign exchange data from the websites of banks and save them to json files or MariaDB. The project environment can be build and set up with docker-compose. The project also supports crontab schedule and email error report for foreign exchange spiders.
+This project provides a foreign exchange spider of [34](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler/res/banks.md) banks in Taiwan. The spider crawls latest foreign exchange data from the websites of banks and save them to json files or MariaDB. The project environment can be build and set up with docker-compose. The project also supports crontab schedule and email error report for foreign exchange spiders.
 
 
 ## Outline
-* [Structure](https://gitlab.com/tainvecs/foreignexchange-taiwan/#structure)
+* [Structure](https://github.com/tainvecs/ForeignExchange-Taiwan#structure)
     + **Docker Image**
         + fx_tw-crawler
         + fx_tw-mariadb
@@ -33,7 +33,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + mysql_code
     + **Network**
         + db-net
-* [Build](https://gitlab.com/tainvecs/foreignexchange-taiwan/#build)
+* [Build](https://github.com/tainvecs/ForeignExchange-Taiwan#build)
     + **Option 1: Build with Docker Compose**
         + Build Docker Images and Set Up Network and Shared Volumes
         + Create and Run Containers
@@ -44,7 +44,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + Docker Volumes
         + Docker Network
         + Docker Containers
-* [Set Up](https://gitlab.com/tainvecs/foreignexchange-taiwan/#set-up)
+* [Set Up](https://github.com/tainvecs/ForeignExchange-Taiwan#set-up)
     + **Set Up MariaDB (Optional)**
         + Connecting to the MySQL Server
         + Change the Root Password
@@ -53,7 +53,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + Initailize the Database for Saving Crawled Data
     + **Set up Email Config for Sending Error Report (Optional)**
         +
-* [Run](https://gitlab.com/tainvecs/foreignexchange-taiwan/#run)
+* [Run](https://github.com/tainvecs/ForeignExchange-Taiwan#run)
     + **Run a Foreign Exchange Crawler**
     + **Set Up Schedule for Foreign Exchange Crawler (Optional)**
 
@@ -163,7 +163,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + ```bash
             docker exec -it fx /bin/bash
           ```
-    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
+    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"** \([more info](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
         + ```json
             {
                 "mariadb_host": "db-my",
@@ -175,7 +175,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
             }
           ```
         + \"user_name\", \"user_password\"
-    + Initailize the Database for Saving Crawled Data \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlersrc)\)
+    + Initailize the Database for Saving Crawled Data \([more info](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler#fx_tw-crawlersrc)\)
         + ```bash
             python3 /spider_code/src/init-mariadb.py \
                 --mariadb_config /spider_code/res/mariadb.config \
@@ -192,7 +192,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + ```bash
             docker exec -it fx /bin/bash
           ```
-    + Set Up Email Config File **\"/spider_code/res/email.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
+    + Set Up Email Config File **\"/spider_code/res/email.config\"** \([more info](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
         + ```json
             {
                 "from_user": "username_from",
@@ -213,7 +213,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
 
 
 ## Run
-+ **Run a Foreign Exchange Crawler** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawler)\)
++ **Run a Foreign Exchange Crawler** \([more info](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler#fx_tw-crawler)\)
     + Attach to the **fx** Container
         + ```bash
             docker attach fx
@@ -243,7 +243,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
           ```
     + Detach from the **fx** Container
         + Press Ctrl+p Ctrl+q
-+ **Set Up Schedule for Foreign Exchange Crawler (Optional)** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerschedule)\)
++ **Set Up Schedule for Foreign Exchange Crawler (Optional)** \([more info](https://github.com/tainvecs/ForeignExchange-Taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerschedule)\)
     + Attach to the **fx** Container
         + ```bash
             docker attach fx
