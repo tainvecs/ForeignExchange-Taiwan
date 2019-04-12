@@ -7,7 +7,7 @@ services:
 
     fx_tw-crawler:
         build: ./fx_tw-crawler
-        image: tainvecs/fx_tw-crawler:2.0
+        image: tainvecs/fx_tw-crawler
         networks:
             - db-net
         volumes:
@@ -22,7 +22,7 @@ services:
 
     fx_tw-mariadb:
         build: ./fx_tw-mariadb
-        image: tainvecs/fx_tw-mariadb:1.0
+        image: tainvecs/fx_tw-mariadb
         container_name: db-my
         environment:
             - MYSQL_ROOT_PASSWORD=root
