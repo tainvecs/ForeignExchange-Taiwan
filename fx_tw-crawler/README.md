@@ -25,6 +25,10 @@
     + schedule_start.sh
     + schedule.crontab
     + schedule.sh
+* [Run a Foreign Exchange Spider Container](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/#run-a-foreign-exchange-spider-container)
+    + Docker Network and Docker Volume
+    + Run a FX Spider Container
+    + Connect to a MariaDB Container
 
 
 ## /fx_tw-crawler
@@ -159,7 +163,4 @@
     + \"host_name\"
 	   + The **container name** or the **ip address** of the postgresql container that connects to the spider with the docker network.
        + The **ip address** of the postgresql container can be look up by docker inspect.
-
-[//]: <> ( docker run -d --name "container_name" --network "network_name" -v "db-my_volume_name":/mariadb_code -e MYSQL_ROOT_PASSWORD=root tainvecs/fx_tw-mariadb )
-[//]: <> ( docker run -d --name "container_name" --network "network_name" -v "db-pg_volume_name":/postgres_code -e POSTGRES_USER=root -e POSTGRES_PASSWORD=root tainvecs/fx_tw-postgres )
 
