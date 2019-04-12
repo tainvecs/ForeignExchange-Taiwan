@@ -145,14 +145,14 @@ This project provides a foreign exchange spider of [34](https://github.com/tainv
         + default password is \"root\"
     + Change the Root Password
         + ```mysql
-            SET PASSWORD FOR 'root'@'locahost' = PASSWORD('new_root_password');
+            SET PASSWORD FOR 'root'@'localhost' = PASSWORD('new_root_password');
             flush privileges;
           ```
         + \"new_root_password\"
     + Create a New User and Grant All Privileges
         + ```bash
-            CREATE USER 'user_name'@'locahost' IDENTIFIED BY 'new_user_password';
-            GRANT ALL PRIVILEGES ON *.* TO 'user_name'@'locahost';
+            CREATE USER 'user_name'@'localhost' IDENTIFIED BY 'new_user_password';
+            GRANT ALL PRIVILEGES ON *.* TO 'user_name'@'localhost';
           ```
         + \"user_name\", \"new_user_password\"
     + Exit from **db-my** Container
