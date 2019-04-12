@@ -126,7 +126,7 @@ This project provides a foreign exchange spider of [34](https://github.com/tainv
                 --name db-my \
                 --network db-net \
                 -v mysql_data:/var/lib/mysql \
-                -v mysql_code:/mariadb_code \
+                -v mysql_code:/mysql_code \
                 -e MYSQL_ROOT_PASSWORD=root \
                 tainvecs/fx_tw-mariadb
           ```
