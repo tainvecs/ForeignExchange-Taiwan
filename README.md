@@ -1,6 +1,8 @@
 ## Environment
 * Ubuntu 18.04
 * Python 3.6
+* Docker 18.09.4
+* docker-compose 1.24.0
 * Selenium 3.141.0
 * chrome-browser 71.0.3578.98-0
 * chromedriver 2.45
@@ -141,8 +143,7 @@
             CREATE USER 'user_name'@'locahost' IDENTIFIED BY 'new_user_password';
             GRANT ALL PRIVILEGES ON *.* TO 'user_name'@'locahost';
           ```
-        + \"user_name\"
-        + \"new_user_password\"
+        + \"user_name\", \"new_user_password\"
     + Exit from **db-my** Container
         + ```bash
             exit
@@ -162,8 +163,7 @@
                 "mariadb_charset": "utf8"
             }
           ```
-        + \"user_name\"
-        + \"user_password\"
+        + \"user_name\", \"user_password\"
     + Initailize the Database for Saving Crawled Data
         + ```bash
             python3 /spider_code/src/init-mariadb.py \
@@ -192,12 +192,9 @@
                 "subject": "subject"
             }
           ```
-        + \"username_from\"
-        + \"email_address_from\"
-        + \"email_app_password\": gmail app passwords
-        + \"username_to\"
-        + \"email_address_to\"
-        + \"subject\"
+        + \"email_app_password\"
+            + gmail app passwords
+        + \"username_from\", \"email_address_from\", \"username_to\", \"email_address_to\", \"subject\"
     + Exit from **fx** Container
         + ```bash
             exit
