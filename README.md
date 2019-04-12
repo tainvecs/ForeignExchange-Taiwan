@@ -152,7 +152,7 @@
         + ```bash
             docker exec -it fx /bin/bash
           ```
-    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"**
+    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
         + ```json
             {
                 "mariadb_host": "db-my",
@@ -164,7 +164,7 @@
             }
           ```
         + \"user_name\", \"user_password\"
-    + Initailize the Database for Saving Crawled Data
+    + Initailize the Database for Saving Crawled Data \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlersrc)\)
         + ```bash
             python3 /spider_code/src/init-mariadb.py \
                 --mariadb_config /spider_code/res/mariadb.config \
@@ -181,7 +181,7 @@
         + ```bash
             docker exec -it fx /bin/bash
           ```
-    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"**
+    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
         + ```json
             {
                 "from_user": "username_from",
@@ -202,7 +202,7 @@
 
 
 ## Run
-+ **Run a Foreign Exchange Crawler**
++ **Run a Foreign Exchange Crawler** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawler)\)
     + Attach to the **fx** Container
         + ```bash
             docker attach fx
@@ -232,7 +232,7 @@
           ```
     + Detach from the **fx** Container
         + Press Ctrl+p Ctrl+q
-+ **Set Up Schedule for Foreign Exchange Crawler**
++ **Set Up Schedule for Foreign Exchange Crawler** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerschedule)\)
     + Attach to the **fx** Container
         + ```bash
             docker attach fx
