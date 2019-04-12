@@ -16,7 +16,7 @@
 
 
 ## Overview
-This project provides a foreign exchange spider of [34](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/res/banks.md) banks in Taiwan. The spider crawls latest foreign exchange data from the websites of banks and save them to json files or a MariaDB database. The project environment can be build and set up with docker-compose. The project also supports crontab schedule and emailing error report for foreign exchange spiders. 
+This project provides a foreign exchange spider of [34](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/res/banks.md) banks in Taiwan. The spider crawls latest foreign exchange data from the websites of banks and save them to json files or MariaDB. The project environment can be build and set up with docker-compose. The project also supports crontab schedule and email error report for foreign exchange spiders.
 
 
 ## Outline
@@ -36,17 +36,23 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
 * [Build](https://gitlab.com/tainvecs/foreignexchange-taiwan/#build)
     + **Option 1: Build with Docker Compose**
         + Build Docker Images and Set Up Network and Shared Volumes
-        + Start and Run Containers
+        + Create and Run Containers
     + **Option 2: Build with Dockerfile**
         + Docker Images
-            + Option 1: Build Docker Images with Dockerfile
+            + Option 1: Build Docker Images with Dockerfiles
             + Option 2: Pull Docker Images from Docker Hub
-        + Docker Volume
+        + Docker Volumes
         + Docker Network
         + Docker Containers
 * [Set Up](https://gitlab.com/tainvecs/foreignexchange-taiwan/#set-up)
     + **Set Up MariaDB (Optional)**
+        + Connecting to the MySQL Server
+        + Change the Root Password
+        + Create a New User and Grant All Privileges
+        + Set Up MariaDB Config File
+        + Initailize the Database for Saving Crawled Data
     + **Set up Email Config for Sending Error Report (Optional)**
+        +
 * [Run](https://gitlab.com/tainvecs/foreignexchange-taiwan/#run)
     + **Run a Foreign Exchange Crawler**
     + **Set Up Schedule for Foreign Exchange Crawler (Optional)**
@@ -57,7 +63,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
     - **fx_tw-crawler**
         + The docker image of spider that crawls the foreign exchange data of banks in Taiwan
     - **fx_tw-mariadb**
-        + The docker image of mariadb that saves the crawled data
+        + The docker image of MariaDB that saves the crawled data
 * **Docker Container**
     - **fx**
         + The container instance of **fx_tw-crawler**
@@ -67,12 +73,12 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
     - **spider_code**
         + The share volume for the code of a foreign exchange spider
     - **mysql_data**
-        + The share volume of mysql default data directory in a **db-my** container
+        + The share volume of MySQL default data directory in a **db-my** container
     - **mysql_code**
         + The share volume for the code of a **db-my** container
 * **Network**
     - **db-net**
-        + Container network between **fx** and **db-my**
+        + Network between **fx** and **db-my** container
 
 
 ## Build
@@ -81,13 +87,13 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + ```bash
             docker-compose build --no-cache
           ```
-    + Start and Run Containers
+    + Create and Run Containers
         + ```bash
             docker-compose up -d
           ```
 * **Option 2: Build with Dockerfile**
     + Docker Images
-        + Option 1: Build Docker Images with Dockerfile
+        + Option 1: Build Docker Images with Dockerfiles
             + ```bash
                 docker build -t tainvecs/fx_tw-crawler --no-cache ./fx_tw-crawler
                 docker build -t tainvecs/fx_tw-mariadb --no-cache ./fx_tw-mariadb
@@ -97,7 +103,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
                 docker pull tainvecs/fx_tw-crawler
                 docekr pull tainvecs/fx_tw-mariadb
               ```
-    + Docker Volume
+    + Docker Volumes
         + ```bash
             docker volume create "spider_code"
             docker volume create "mysql_data"
@@ -136,6 +142,7 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
         + ```mysql
             mysql -u root -h localhost -P 3306 -p
           ```
+        + default password is \"root\"
     + Change the Root Password
         + ```mysql
             SET PASSWORD FOR 'root'@'locahost' = PASSWORD('new_root_password');
@@ -180,12 +187,12 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
             exit
           ```
 + **Set up Email Config for Sending Error Report (Optional)**
-    + Gmail APP passwords should be generated in advance
+    + Gmail app passwords should be generated in advance
     + Execute **\"/bin/bash\"** Command in **fx** Container
         + ```bash
             docker exec -it fx /bin/bash
           ```
-    + Set Up MariaDB Config File **\"/spider_code/res/mariadb.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
+    + Set Up Email Config File **\"/spider_code/res/email.config\"** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerres)\)
         + ```json
             {
                 "from_user": "username_from",
@@ -243,16 +250,15 @@ This project provides a foreign exchange spider of [34](https://gitlab.com/tainv
           ```
     + Edit the Command of Schedule Crawler
         + **\"/spider_code/schedule/schedule.sh\"**
-        + Default scheduled crawler save crawled data to MariaDB and a json file in **\"/spider_code/output/\"**.
-        + Default scheduled crawler also use the email_config **\"/spider_code/res/email.config\"** to send error report.
+        + Default scheduled crawler saves crawled data to MariaDB and a json file in **\"/spider_code/output/\"**.
+        + Default scheduled crawler also uses the email_config **\"/spider_code/res/email.config\"** to send error report.
     + Edit the Schedule Task
         + **\"/spider_code/schedule/schedule_start.sh\"**
-        + Default schedule task run the crawler every ten minutes from 09:00 to 18:00 everyday.
+        + Default schedule task runs the crawler every ten minutes from 09:00 to 18:00 everyday.
         + Default schedule task also redirects stdin and stderr to a log file **\"/spider_code/log/crontag.log\"**.
-    + Start a Schedule Task for a foreign exchange Crawler
+    + Start a Schedule Task for a Foreign Exchange Crawler
         + ```bash
             bash /spider_code/schedule/schedule_start.sh
           ```
     + Detach from the **fx** Container
         + Press Ctrl+p Ctrl+q
-

@@ -17,11 +17,11 @@
 
 ## Run a MariaDB Container for Foreign Exchange Crawler
 * **Docker Network and Docker Volume**
-    + the Docker Network for FX Spiders and MariaDB Containers
+    + Create the Docker Network for Foreign Exchange Spiders and MariaDB Containers
         + ```bash
             docker network create "network_name"
           ```
-    + the Shared Volume for MariaDB Containers
+    + Create the Shared Volume for MariaDB Containers
         + ```bash
             docker volume create "volume_name"
           ```
@@ -36,7 +36,7 @@
             tainvecs/fx_tw-mariadb
       ```
     + **MYSQL_ROOT_PASSWORD**
-        + default password for root (set to "root" in the example command)
+        + Default password for root (set to "root" in the example command)
     + **MYSQL_USER**, **MYSQL_PASSWORD**
     + \"container_name\", \"network_name\", \"volume_name\"
 
@@ -67,4 +67,3 @@
         + ```bash
             exit
           ```
-
