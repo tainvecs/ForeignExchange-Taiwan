@@ -15,6 +15,10 @@
 * [GitLab](https://gitlab.com/tainvecs/foreignexchange-taiwan/)
 
 
+## Overview
+This project provides a foreign exchange spider of [34](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler/res/banks.md) banks in Taiwan. The spider crawls latest foreign exchange data from the websites of banks and save them to json files or a MariaDB database. The project environment can be build and set up with docker-compose. The project also supports crontab schedule and emailing error report for foreign exchange spiders. 
+
+
 ## Outline
 * [Structure](https://gitlab.com/tainvecs/foreignexchange-taiwan/#structure)
     + **Docker Image**
@@ -41,11 +45,11 @@
         + Docker Network
         + Docker Containers
 * [Set Up](https://gitlab.com/tainvecs/foreignexchange-taiwan/#set-up)
-    + **Set Up MariaDB**
+    + **Set Up MariaDB (Optional)**
     + **Set up Email Config for Sending Error Report (Optional)**
 * [Run](https://gitlab.com/tainvecs/foreignexchange-taiwan/#run)
     + **Run a Foreign Exchange Crawler**
-    + **Set Up Schedule for Foreign Exchange Crawler**
+    + **Set Up Schedule for Foreign Exchange Crawler (Optional)**
 
 
 ## Structure
@@ -123,7 +127,7 @@
 
 
 ## Set Up
-+ **Set Up MariaDB**
++ **Set Up MariaDB (Optional)**
     + Execute **\"/bin/bash\"** Command in **db-my** Container
         + ```bash
             docker exec -it db-my /bin/bash
@@ -232,7 +236,7 @@
           ```
     + Detach from the **fx** Container
         + Press Ctrl+p Ctrl+q
-+ **Set Up Schedule for Foreign Exchange Crawler** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerschedule)\)
++ **Set Up Schedule for Foreign Exchange Crawler (Optional)** \([more info](https://gitlab.com/tainvecs/foreignexchange-taiwan/tree/master/fx_tw-crawler#fx_tw-crawlerschedule)\)
     + Attach to the **fx** Container
         + ```bash
             docker attach fx
