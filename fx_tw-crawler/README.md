@@ -146,7 +146,7 @@
       ```
     + \"container_name\", \"network_name\", \"fx_volume_name\"
 * **Connect to a MariaDB Container**
-    + ```Python
+    + ```python
         import pymysql
         conn_mysql = ( pymysql.connect(host = "host_name", port = 3306, user = "user_name", password = "user_password", charset="utf8") )
       ```
@@ -154,8 +154,8 @@
 	   + The **container name** or the **ip address** of the mariadb container that connects to the spider with the docker network.
        + The **ip address** of the mariadb container can be look up by docker inspect.
     + \"user_name\", \"user_password\"
-* **Connect to PostgreSQL** (PostgreSQL is not supported yet)
-    + ```Python
+* **Connect to PostgreSQL** \(PostgreSQL is not supported yet\)
+    + ```python
         import psycopg2
         conn_pg = ( psycopg2.connect(host = "host_name", port = 5432, user = "user_name", password = "user_password") )
         conn_pg.set_client_encoding('UTF8')
