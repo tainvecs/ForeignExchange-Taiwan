@@ -101,7 +101,7 @@ This project provides a foreign exchange spider of [34](https://github.com/tainv
         + Option 2: Pull Docker Images from Docker Hub
             + ```bash
                 docker pull tainvecs/fx_tw-crawler
-                docekr pull tainvecs/fx_tw-mariadb
+                docker pull tainvecs/fx_tw-mariadb
               ```
     + Docker Volumes
         + ```bash
