@@ -52,9 +52,11 @@ This project provides a foreign exchange spider of [34](https://github.com/tainv
         + Set Up MariaDB Config File
         + Initailize the Database for Saving Crawled Data
     + **Set up Email Config for Sending Error Report (Optional)**
-        +
 * [Run](https://github.com/tainvecs/ForeignExchange-Taiwan#run)
     + **Run a Foreign Exchange Crawler**
+        + Run a Crawler and Save Crawled Data to a Json File
+        + Run a Crawler and Save Crawled Data to MariaDB
+        + Run a Crawler that Save Crawled Data to MariaDB and Email an Error Report
     + **Set Up Schedule for Foreign Exchange Crawler (Optional)**
 
 
